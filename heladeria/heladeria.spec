@@ -17,6 +17,11 @@ a = Analysis(
         "PIL._tkinter_finder",
         "reportlab.graphics.barcode.code128",
         "reportlab.graphics.barcode.code93",
+        # Importados dinámicamente en main_window.py via __import__()
+        "ui.screen_dashboard",
+        "ui.screen_ingredientes",
+        "ui.screen_gastos",
+        "ui.screen_recetas",
     ],
     hookspath=[],
     hooksconfig={},
