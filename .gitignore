@@ -1,0 +1,19 @@
+# PyInstaller build artifacts
+heladeria/build/
+__pycache__/
+*.pyc
+*.pyo
+
+# Base de datos local de desarrollo
+heladeria/db/heladeria.db
+
+# Entornos virtuales
+venv/
+.venv/
+env/
+
+# IDEs
+.vscode/
+.idea/
+*.suo
+*.user
