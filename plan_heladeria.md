@@ -151,7 +151,8 @@ Cada receta genera un PDF con:
 | 6 ✅ | Exportación PDF con ReportLab: detalle completo de la receta |
 | 7 ✅ | Modificar UX: nueva paleta azul/blanco, toasts, filtro en tablas, atajos de teclado, gráfico de torta en dashboard. Pulido: fix blank screen (bind_all → bind _entry), dashboard compacto, tipografía consistente con theme.py |
 | 8 ✅ | Empaquetado con PyInstaller: generar `.exe` para Windows 64 bits — `dist\Heladeria.exe` (31.8 MB) |
-| 9 | Fase de feedback: ajustes de UX y funcionalidad basados en uso real |
+| 8b ✅ | Fix v1.0.1: `hiddenimports` para `ui.screen_*` — import dinámico via `__import__()` no detectado por PyInstaller |
+| 9 ✅ | Fase de feedback v1 (2026-06-15): rediseño completo de Gastos variables + fixes Materia prima |
 
 ---
 
@@ -173,3 +174,5 @@ pyinstaller
 - `heladeria.spec` incluye datos de CustomTkinter y ReportLab con `collect_data_files`.
 - `DB_PATH` en `database.py` detecta `sys.frozen` y guarda la DB en `%APPDATA%\Heladeria\` cuando corre como `.exe`.
 - Ejecutable generado: `dist\Heladeria.exe` — 31.8 MB, sin consola, sin icono.
+- **Truco importante:** los módulos `ui.screen_*` se importan dinámicamente via `__import__()` en `main_window.py` — PyInstaller no los detecta. Deben estar en `hiddenimports` del spec.
+- Releases publicados en GitHub: [v1.0.0](https://github.com/Diganexia/fabrica-Heladeria/releases/tag/v1.0.0), [v1.0.1](https://github.com/Diganexia/fabrica-Heladeria/releases/tag/v1.0.1)

@@ -5,7 +5,6 @@ import os
 
 def _get_db_path():
     if getattr(sys, "frozen", False):
-        # Ejecutando como .exe — guardar en AppData para que sea persistente
         app_data = os.path.join(os.environ.get("APPDATA", os.path.expanduser("~")), "Heladeria")
         os.makedirs(app_data, exist_ok=True)
         return os.path.join(app_data, "heladeria.db")
@@ -33,12 +32,12 @@ def init_db():
                 fecha_actualizacion TEXT    NOT NULL
             );
 
-            CREATE TABLE IF NOT EXISTS gastos (
-                id             INTEGER PRIMARY KEY AUTOINCREMENT,
-                nombre         TEXT    NOT NULL,
-                monto          REAL    NOT NULL,
-                periodo        TEXT    NOT NULL DEFAULT 'mensual',
-                produccion_kg  REAL    NOT NULL
+            CREATE TABLE IF NOT EXISTS periodos_gastos (
+                id      INTEGER PRIMARY KEY AUTOINCREMENT,
+                anio    INTEGER NOT NULL,
+                mes     INTEGER NOT NULL,
+                kg_prod REAL    NOT NULL,
+                UNIQUE(anio, mes)
             );
 
             CREATE TABLE IF NOT EXISTS recetas (
@@ -56,6 +55,36 @@ def init_db():
                 cantidad        REAL    NOT NULL
             );
         """)
+    _migrate_gastos()
+
+
+def _migrate_gastos():
+    """Migrates old gastos schema (with produccion_kg) to new period-based schema."""
+    with get_connection() as conn:
+        cols = [r[1] for r in conn.execute("PRAGMA table_info(gastos)").fetchall()]
+
+    if not cols:
+        with get_connection() as conn:
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS gastos (
+                    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                    periodo_id INTEGER NOT NULL REFERENCES periodos_gastos(id) ON DELETE CASCADE,
+                    nombre     TEXT    NOT NULL,
+                    monto      REAL    NOT NULL
+                )
+            """)
+    elif "produccion_kg" in cols:
+        # Old schema detected — drop and recreate (data is incompatible with new model)
+        with get_connection() as conn:
+            conn.executescript("""
+                DROP TABLE IF EXISTS gastos;
+                CREATE TABLE gastos (
+                    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                    periodo_id INTEGER NOT NULL REFERENCES periodos_gastos(id) ON DELETE CASCADE,
+                    nombre     TEXT    NOT NULL,
+                    monto      REAL    NOT NULL
+                );
+            """)
 
 
 # ---------- Ingredientes ----------
@@ -86,26 +115,73 @@ def delete_ingrediente(id_):
         conn.execute("DELETE FROM ingredientes WHERE id=?", (id_,))
 
 
+# ---------- Períodos de gastos ----------
+
+def get_periodos_gastos():
+    with get_connection() as conn:
+        return conn.execute(
+            "SELECT * FROM periodos_gastos ORDER BY anio DESC, mes DESC"
+        ).fetchall()
+
+
+def get_periodo_by_mes_anio(mes, anio):
+    with get_connection() as conn:
+        return conn.execute(
+            "SELECT * FROM periodos_gastos WHERE mes=? AND anio=?", (mes, anio)
+        ).fetchone()
+
+
+def upsert_periodo(mes, anio, kg_prod):
+    """Creates or updates a period. Returns its id."""
+    with get_connection() as conn:
+        existing = conn.execute(
+            "SELECT id FROM periodos_gastos WHERE mes=? AND anio=?", (mes, anio)
+        ).fetchone()
+        if existing:
+            conn.execute(
+                "UPDATE periodos_gastos SET kg_prod=? WHERE id=?", (kg_prod, existing["id"])
+            )
+            return existing["id"]
+        cur = conn.execute(
+            "INSERT INTO periodos_gastos (mes, anio, kg_prod) VALUES (?, ?, ?)",
+            (mes, anio, kg_prod)
+        )
+        return cur.lastrowid
+
+
+def delete_periodo(id_):
+    with get_connection() as conn:
+        conn.execute("DELETE FROM periodos_gastos WHERE id=?", (id_,))
+
+
 # ---------- Gastos ----------
 
 def get_gastos():
+    """Returns all gastos across all periods (used for count in dashboard)."""
     with get_connection() as conn:
         return conn.execute("SELECT * FROM gastos ORDER BY nombre").fetchall()
 
 
-def add_gasto(nombre, monto, periodo, produccion_kg):
+def get_gastos_by_periodo(periodo_id):
+    with get_connection() as conn:
+        return conn.execute(
+            "SELECT * FROM gastos WHERE periodo_id=? ORDER BY nombre", (periodo_id,)
+        ).fetchall()
+
+
+def add_gasto(periodo_id, nombre, monto):
     with get_connection() as conn:
         conn.execute(
-            "INSERT INTO gastos (nombre, monto, periodo, produccion_kg) VALUES (?, ?, ?, ?)",
-            (nombre, monto, periodo, produccion_kg),
+            "INSERT INTO gastos (periodo_id, nombre, monto) VALUES (?, ?, ?)",
+            (periodo_id, nombre, monto)
         )
 
 
-def update_gasto(id_, nombre, monto, periodo, produccion_kg):
+def update_gasto(id_, nombre, monto):
     with get_connection() as conn:
         conn.execute(
-            "UPDATE gastos SET nombre=?, monto=?, periodo=?, produccion_kg=? WHERE id=?",
-            (nombre, monto, periodo, produccion_kg, id_),
+            "UPDATE gastos SET nombre=?, monto=? WHERE id=?",
+            (nombre, monto, id_)
         )
 
 
@@ -115,17 +191,51 @@ def delete_gasto(id_):
 
 
 def get_gasto_variable_por_kg():
-    """Suma todos los gastos y los divide por los kg de producción del período."""
+    """Historical weighted average: sum(all montos) / sum(all kg). Used in recipe cost."""
     with get_connection() as conn:
-        rows = conn.execute("SELECT monto, produccion_kg FROM gastos").fetchall()
+        rows = conn.execute("""
+            SELECT pg.kg_prod, COALESCE(SUM(g.monto), 0) AS total_gastos
+            FROM periodos_gastos pg
+            LEFT JOIN gastos g ON g.periodo_id = pg.id
+            GROUP BY pg.id
+        """).fetchall()
     if not rows:
         return 0.0
-    total_gastos = sum(r["monto"] for r in rows)
-    # Usa el promedio ponderado de produccion_kg entre todos los registros
-    total_kg = sum(r["produccion_kg"] for r in rows)
-    if total_kg == 0:
-        return 0.0
-    return total_gastos / total_kg
+    total_montos = sum(r["total_gastos"] for r in rows)
+    total_kg = sum(r["kg_prod"] for r in rows)
+    return total_montos / total_kg if total_kg else 0.0
+
+
+def get_gasto_variable_periodo(periodo_id):
+    """Cost per kg for a specific period (for display on gastos screen)."""
+    with get_connection() as conn:
+        periodo = conn.execute(
+            "SELECT kg_prod FROM periodos_gastos WHERE id=?", (periodo_id,)
+        ).fetchone()
+        if not periodo or periodo["kg_prod"] == 0:
+            return 0.0
+        total = conn.execute(
+            "SELECT COALESCE(SUM(monto), 0) AS total FROM gastos WHERE periodo_id=?",
+            (periodo_id,)
+        ).fetchone()
+    return total["total"] / periodo["kg_prod"]
+
+
+def get_gasto_variable_historico():
+    """Returns weighted avg and period count across all months."""
+    with get_connection() as conn:
+        rows = conn.execute("""
+            SELECT pg.kg_prod, COALESCE(SUM(g.monto), 0) AS total_gastos
+            FROM periodos_gastos pg
+            LEFT JOIN gastos g ON g.periodo_id = pg.id
+            GROUP BY pg.id
+        """).fetchall()
+    if not rows:
+        return {"promedio_kg": 0.0, "n_periodos": 0}
+    total_montos = sum(r["total_gastos"] for r in rows)
+    total_kg = sum(r["kg_prod"] for r in rows)
+    promedio = total_montos / total_kg if total_kg else 0.0
+    return {"promedio_kg": promedio, "n_periodos": len(rows)}
 
 
 # ---------- Recetas ----------
@@ -187,7 +297,9 @@ def set_receta_ingredientes(receta_id, items):
 
 def calcular_costo_receta(receta_id):
     with get_connection() as conn:
-        receta = conn.execute("SELECT rinde_kg, margen_pct FROM recetas WHERE id=?", (receta_id,)).fetchone()
+        receta = conn.execute(
+            "SELECT rinde_kg, margen_pct FROM recetas WHERE id=?", (receta_id,)
+        ).fetchone()
     if not receta or receta["rinde_kg"] == 0:
         return {"costo_mp_kg": 0, "gasto_var_kg": 0, "costo_total_kg": 0, "precio_venta_kg": 0}
 

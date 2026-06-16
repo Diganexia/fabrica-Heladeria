@@ -124,36 +124,17 @@ class ScreenIngredientes(ctk.CTkFrame):
         self._tree.bind("<<TreeviewSelect>>", self._on_select)
 
     # ------------------------------------------------------------------ #
-    # Panel formulario                                                     #
+    # Panel formulario (botones fijos abajo, campos scrolleables)         #
     # ------------------------------------------------------------------ #
     def _build_panel(self, parent):
-        self._panel = ctk.CTkFrame(parent, fg_color=C_CARD, corner_radius=12,
-                                   border_width=1, border_color=C_BORDER, width=280)
-        self._panel.grid(row=0, column=1, sticky="nsew")
-        self._panel.pack_propagate(False)
+        outer = ctk.CTkFrame(parent, fg_color=C_CARD, corner_radius=12,
+                             border_width=1, border_color=C_BORDER, width=280)
+        outer.grid(row=0, column=1, sticky="nsew")
+        outer.pack_propagate(False)
 
-        ctk.CTkLabel(
-            self._panel, text="Detalle",
-            font=ctk.CTkFont(family="Segoe UI", size=15, weight="bold"),
-            text_color=C_TEXT,
-        ).pack(anchor="w", padx=20, pady=(18, 12))
-
-        self._var_nombre = tk.StringVar()
-        self._var_precio = tk.StringVar()
-        self._var_unidad = tk.StringVar(value=UNIDADES[0])
-
-        self._entry_nombre = self._field(self._panel, "Nombre", self._var_nombre)
-        self._entry_precio = self._field(self._panel, "Precio ($)", self._var_precio)
-        self._dropdown(self._panel, "Unidad", self._var_unidad)
-
-        self._lbl_error = ctk.CTkLabel(
-            self._panel, text="", text_color=C_DANGER,
-            font=ctk.CTkFont(family="Segoe UI", size=11), wraplength=240,
-        )
-        self._lbl_error.pack(anchor="w", padx=20, pady=(6, 0))
-
-        btns = ctk.CTkFrame(self._panel, fg_color="transparent")
-        btns.pack(fill="x", padx=20, pady=(12, 0))
+        # Botones fijos al fondo — se packean PRIMERO para que siempre sean visibles
+        btns = ctk.CTkFrame(outer, fg_color="transparent")
+        btns.pack(side="bottom", fill="x", padx=20, pady=(0, 12))
 
         self._btn_save = ctk.CTkButton(
             btns, text="Guardar",
@@ -177,6 +158,33 @@ class ScreenIngredientes(ctk.CTkFrame):
             font=ctk.CTkFont(family="Segoe UI", size=13),
             height=38, corner_radius=8, command=self._cancel,
         ).pack(fill="x")
+
+        self._lbl_error = ctk.CTkLabel(
+            outer, text="", text_color=C_DANGER,
+            font=ctk.CTkFont(family="Segoe UI", size=11), wraplength=240,
+        )
+        self._lbl_error.pack(side="bottom", anchor="w", padx=20, pady=(0, 4))
+
+        # Título y campos (se packean desde arriba; si la ventana es muy chica
+        # los campos se cortan, pero los botones de abajo siempre se ven)
+        ctk.CTkLabel(
+            outer, text="Detalle",
+            font=ctk.CTkFont(family="Segoe UI", size=15, weight="bold"),
+            text_color=C_TEXT,
+        ).pack(anchor="w", padx=20, pady=(18, 4))
+
+        self._var_nombre = tk.StringVar()
+        self._var_precio = tk.StringVar()
+        self._var_unidad = tk.StringVar(value=UNIDADES[0])
+
+        self._entry_nombre = self._field(outer, "Nombre", self._var_nombre)
+        self._entry_precio = self._field(outer, "Precio ($)", self._var_precio)
+
+        # Solo permite números y coma/punto en el precio
+        vcmd = (self.register(lambda P: P == "" or all(c in "0123456789.," for c in P)), "%P")
+        self._entry_precio._entry.configure(validate="key", validatecommand=vcmd)
+
+        self._dropdown(outer, "Unidad", self._var_unidad)
 
 
     def _field(self, parent, label, var):
@@ -269,6 +277,10 @@ class ScreenIngredientes(ctk.CTkFrame):
         nombre, precio, unidad = self._validate()
         if nombre is None:
             return
+        if self._selected_id is None:
+            if any(r["nombre"].lower() == nombre.lower() for r in self._all_rows):
+                self._lbl_error.configure(text="Ya existe un ingrediente con ese nombre.")
+                return
         fecha = datetime.now().strftime("%Y-%m-%d")
         if self._selected_id is None:
             db.add_ingrediente(nombre, precio, unidad, fecha)
