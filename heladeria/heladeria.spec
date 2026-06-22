@@ -22,6 +22,7 @@ a = Analysis(
         "ui.screen_ingredientes",
         "ui.screen_gastos",
         "ui.screen_recetas",
+        "ui.screen_periodos",
     ],
     hookspath=[],
     hooksconfig={},

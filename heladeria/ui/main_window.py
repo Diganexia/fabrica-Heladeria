@@ -10,6 +10,7 @@ NAV_ITEMS = [
     ("Materia prima",    "screen_ingredientes"),
     ("Gastos variables", "screen_gastos"),
     ("Recetas",          "screen_recetas"),
+    ("Períodos",         "screen_periodos"),
 ]
 
 
@@ -36,7 +37,7 @@ class MainWindow(ctk.CTk):
     # Top bar                                                              #
     # ------------------------------------------------------------------ #
     def _build_topbar(self):
-        bar = ctk.CTkFrame(self, fg_color=C_TOPBAR, height=58, corner_radius=0)
+        bar = ctk.CTkFrame(self, fg_color=C_TOPBAR, height=68, corner_radius=0)
         bar.pack(side="top", fill="x")
         bar.pack_propagate(False)
 
@@ -56,15 +57,16 @@ class MainWindow(ctk.CTk):
 
     def _chip(self, parent, label, value, accent=False):
         bg = C_ACCENT if accent else "#2a4a7f"
+        val_color = "#4ade80" if accent else "#fbbf24"
         frame = ctk.CTkFrame(parent, fg_color=bg, corner_radius=8)
-        frame.pack(side="left", padx=5, pady=9)
+        frame.pack(side="left", padx=5, pady=8)
         ctk.CTkLabel(frame, text=label,
                      font=ctk.CTkFont(family="Segoe UI", size=10),
-                     text_color="#c7d8f5").pack(padx=12, pady=(5, 0))
+                     text_color="#c7d8f5").pack(padx=12, pady=(6, 1))
         lbl = ctk.CTkLabel(frame, text=value,
-                           font=ctk.CTkFont(family="Segoe UI", size=13, weight="bold"),
-                           text_color=C_TEXT_LIGHT)
-        lbl.pack(padx=12, pady=(0, 5))
+                           font=ctk.CTkFont(family="Segoe UI", size=14, weight="bold"),
+                           text_color=val_color)
+        lbl.pack(padx=12, pady=(0, 6))
         return lbl
 
     # ------------------------------------------------------------------ #
@@ -104,7 +106,7 @@ class MainWindow(ctk.CTk):
             self._nav_buttons[key] = btn
 
         ctk.CTkLabel(
-            self._sidebar, text="v1.0",
+            self._sidebar, text="v1.1",
             font=ctk.CTkFont(size=10), text_color="#7a9cc8",
         ).pack(side="bottom", pady=14)
 
@@ -172,7 +174,8 @@ class MainWindow(ctk.CTk):
         shortcuts = [("<Control-Key-1>", "screen_dashboard"),
                      ("<Control-Key-2>", "screen_ingredientes"),
                      ("<Control-Key-3>", "screen_gastos"),
-                     ("<Control-Key-4>", "screen_recetas")]
+                     ("<Control-Key-4>", "screen_recetas"),
+                     ("<Control-Key-5>", "screen_periodos")]
         for keybind, screen in shortcuts:
             self.bind_all(keybind, lambda e, s=screen: self.navigate(s))
 

@@ -153,6 +153,9 @@ Cada receta genera un PDF con:
 | 8 ✅ | Empaquetado con PyInstaller: generar `.exe` para Windows 64 bits — `dist\Heladeria.exe` (31.8 MB) |
 | 8b ✅ | Fix v1.0.1: `hiddenimports` para `ui.screen_*` — import dinámico via `__import__()` no detectado por PyInstaller |
 | 9 ✅ | Fase de feedback v1 (2026-06-15): rediseño completo de Gastos variables + fixes Materia prima |
+| 9b ✅ | Build v1.0.2 (2026-06-15): exe generado (33.3 MB), publicado en GitHub releases — testing final queda para tester humano |
+| 10 ✅ | Fase de feedback v2 (2026-06-22): fix PDF crash ("No item with that key"), fix chips topbar (altura + color), nueva pantalla Períodos con export PDF por período |
+| 10b ⏳ | Build v1.1.0: compilar nuevo exe con pantalla Períodos |
 
 ---
 
