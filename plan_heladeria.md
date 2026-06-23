@@ -160,6 +160,8 @@ Cada receta genera un PDF con:
 | 11b ✅ | Build v1.1.1 (2026-06-22): exe 31.8 MB, publicado en GitHub releases |
 | 12 ✅ | Fix layout PDFs v1.1.2 (2026-06-23): PDF receta — spaceAfter título 2pt→6pt evita pisado con fecha/rinde/margen; PDF período — eliminada línea "Generado el..." duplicada bajo título del mes, queda solo el footer |
 | 12b ✅ | Build v1.1.2 (2026-06-23): exe 31.8 MB, publicado en GitHub releases |
+| 13 ✅ | Fix espaciado receta v1.1.3 (2026-06-23): spaceAfter título receta 6pt→12pt — texto fecha/rinde/margen demasiado pegado al nombre |
+| 13b ✅ | Build v1.1.3 (2026-06-23): exe 31.8 MB, publicado en GitHub releases |
 
 ---
 
