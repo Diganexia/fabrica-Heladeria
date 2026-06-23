@@ -40,7 +40,7 @@ def _estilos():
         ),
         "receta": ParagraphStyle(
             "receta", fontSize=18, textColor=AZUL_OSC,
-            fontName="Helvetica-Bold", spaceAfter=2,
+            fontName="Helvetica-Bold", spaceAfter=6,
         ),
         "fecha": ParagraphStyle(
             "fecha", fontSize=10, textColor=GRIS_CLR,
@@ -368,10 +368,6 @@ def generar_pdf_periodo(periodo_id: int, ruta_destino: str) -> str:
     story.append(Spacer(1, 0.5*cm))
 
     story.append(Paragraph(titulo_periodo, estilos["receta"]))
-    story.append(Paragraph(
-        f"Generado el {fecha_hoy}  ·  Kg producidos: {periodo['kg_prod']:g} kg",
-        estilos["fecha"],
-    ))
     story.append(HRFlowable(width="100%", thickness=1, color=AZUL_OSC, spaceAfter=8))
 
     # Tabla de gastos
