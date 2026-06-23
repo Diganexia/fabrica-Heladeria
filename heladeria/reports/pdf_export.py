@@ -40,7 +40,7 @@ def _estilos():
         ),
         "receta": ParagraphStyle(
             "receta", fontSize=18, textColor=AZUL_OSC,
-            fontName="Helvetica-Bold", spaceAfter=6,
+            fontName="Helvetica-Bold", spaceAfter=12,
         ),
         "fecha": ParagraphStyle(
             "fecha", fontSize=10, textColor=GRIS_CLR,
