@@ -174,7 +174,7 @@ class ScreenDashboard(ctk.CTkFrame):
                          font=_fnt(F_BODY), text_color=C_MUTED).pack(anchor="w", pady=8)
             return
 
-        for r in recetas[-6:][::-1]:
+        for r in sorted(recetas, key=lambda r: r["fecha_creacion"], reverse=True)[:6]:
             costos = db.calcular_costo_receta(r["id"])
             row = ctk.CTkFrame(self._recetas_frame, fg_color=C_BG, corner_radius=7)
             row.pack(fill="x", pady=2, ipady=4)

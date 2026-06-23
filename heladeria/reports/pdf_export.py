@@ -196,10 +196,6 @@ def generar_pdf(receta_id: int, ruta_destino: str) -> str:
     story = []
 
     # ── Encabezado con fondo ──────────────────────────────────────────────
-    header_data = [[
-        Paragraph("Fábrica de Helados", estilos["titulo"]),
-        Paragraph("Calculadora de costos de producción", estilos["subtitulo"]),
-    ]]
     header_tbl = Table([[
         Paragraph("FÁBRICA DE HELADOS", estilos["titulo"]),
     ]], colWidths=[18.5*cm])
@@ -268,7 +264,7 @@ def generar_pdf(receta_id: int, ruta_destino: str) -> str:
 
         ng = len(gasto_filas)
         gasto_tbl = Table(gasto_filas, colWidths=[12.5*cm, 5.5*cm], repeatRows=1)
-        datos_fin = ng - 3  # primeras filas de gastos (sin las 3 últimas de totales)
+        datos_fin = ng - 4  # filas de datos puros; últimas 3 son: total, kg, gv/kg
         gasto_tbl.setStyle(TableStyle([
             ("BACKGROUND",    (0, 0), (-1, 0), AZUL_MED),
             ("TEXTCOLOR",     (0, 0), (-1, 0), BLANCO),
@@ -390,7 +386,7 @@ def generar_pdf_periodo(periodo_id: int, ruta_destino: str) -> str:
 
         ng = len(filas)
         tbl = Table(filas, colWidths=[12.5*cm, 5.5*cm], repeatRows=1)
-        datos_fin = ng - 3
+        datos_fin = ng - 4  # filas de datos puros; últimas 3 son: total, kg, gv/kg
         tbl.setStyle(TableStyle([
             ("BACKGROUND",    (0, 0), (-1, 0), AZUL_MED),
             ("TEXTCOLOR",     (0, 0), (-1, 0), BLANCO),

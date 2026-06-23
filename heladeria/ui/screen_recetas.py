@@ -488,6 +488,9 @@ class ScreenRecetas(ctk.CTkFrame):
         ing_ids = [(ing_id, cant) for ing_id, _, _, _, cant in self._items]
 
         if self._receta_id is None:
+            if any(r["nombre"].lower() == nombre.lower() for r in db.get_recetas()):
+                self._lbl_error.configure(text="Ya existe una receta con ese nombre.")
+                return
             rid = db.add_receta(nombre, rinde, margen, fecha)
         else:
             rid = self._receta_id

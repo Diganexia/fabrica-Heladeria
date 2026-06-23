@@ -1,3 +1,4 @@
+import sqlite3
 import customtkinter as ctk
 import tkinter as tk
 from tkinter import ttk, messagebox
@@ -305,7 +306,7 @@ class ScreenIngredientes(ctk.CTkFrame):
             self._cancel()
             self._load_table()
             self.app.refresh_metrics()
-        except Exception:
+        except sqlite3.IntegrityError:
             self._lbl_error.configure(text="No se puede eliminar: está en uso en una o más recetas.")
 
     # ------------------------------------------------------------------ #
