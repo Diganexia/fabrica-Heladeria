@@ -156,6 +156,10 @@ Cada receta genera un PDF con:
 | 9b ✅ | Build v1.0.2 (2026-06-15): exe generado (33.3 MB), publicado en GitHub releases — testing final queda para tester humano |
 | 10 ✅ | Fase de feedback v2 (2026-06-22): fix PDF crash ("No item with that key"), fix chips topbar (altura + color), nueva pantalla Períodos con export PDF por período |
 | 10b ✅ | Build v1.1.0 (2026-06-22): exe compilado con pantalla Períodos, publicado en GitHub releases |
+| 11 ✅ | Análisis estático + fixes v1.1.1 (2026-06-22): 5 bugs corregidos — ver detalle abajo |
+| 11b ✅ | Build v1.1.1 (2026-06-22): exe 31.8 MB, publicado en GitHub releases |
+| 12 ✅ | Fix layout PDFs v1.1.2 (2026-06-23): PDF receta — spaceAfter título 2pt→6pt evita pisado con fecha/rinde/margen; PDF período — eliminada línea "Generado el..." duplicada bajo título del mes, queda solo el footer |
+| 12b ✅ | Build v1.1.2 (2026-06-23): exe 31.8 MB, publicado en GitHub releases |
 
 ---
 
